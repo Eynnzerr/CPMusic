@@ -88,7 +88,7 @@ public class NetworkUtils {
             //String text = lyric.substring(11);
             lyric = lyric.replace("[","");
             lyric = lyric.replace("]","@");
-            Log.d("parseString",lyric);
+            //Log.d("parseString",lyric);
             String[] splitData = lyric.split("@");
             curLineLyric.setStartTime(getTime(splitData[0]));
             if( splitData.length > 1 ) curLineLyric.setLyric(splitData[1]);
@@ -96,7 +96,7 @@ public class NetworkUtils {
             //curLineLyric.setStartTime(getTime(time));
             //curLineLyric.setLyric(text);
             //if( prevLyric != null ) prevLyric.setEndTime(curLineLyric.getStartTime());
-            Log.d("parseString","startTime="+curLineLyric.getStartTime());
+            //Log.d("parseString","startTime="+curLineLyric.getStartTime());
             timeLineLyrics.add(curLineLyric);
         }
         return timeLineLyrics;

@@ -16,6 +16,10 @@ public class PlayingViewModel extends ViewModel {
     //private MutableLiveData<Integer> seqLive;
 
 
+    public void setCurrentProgress(int newProgress) {
+        currentProgress.setValue(newProgress);
+    }
+
     public MutableLiveData<Integer> getCurrentProgress() {
         //if( currentProgress == null ) currentProgress = new MutableLiveData<>();
         return currentProgress;
@@ -27,6 +31,22 @@ public class PlayingViewModel extends ViewModel {
             timer = new Timer();
 
         currentProgress.setValue(pos);
+
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                //这里不能用setValue！
+                currentProgress.postValue(getCurrentProgress().getValue() + 1000);
+            }
+        };
+        timer.schedule(timerTask, 1000, 1000);
+    }
+
+    public void startTiming() {
+        if (timer == null)
+            timer = new Timer();
+
+        currentProgress.setValue(0);
 
         TimerTask timerTask = new TimerTask() {
             @Override
@@ -56,13 +76,15 @@ public class PlayingViewModel extends ViewModel {
     public void stopTiming() {
         //需要实现在点击暂停播放按钮后，进度条更新的计时任务停止，但是进度条的进度值不变。
         //所以一种简单暴力的方法是直接将计时器取消并置空
-        timer.cancel();
-        timer = null;
+        if( timer != null ){
+            timer.cancel();
+            timer = null;
+        }
     }
 
     @Override
     protected void onCleared() {
         super.onCleared();
-        timer.cancel();
+        if( timer != null) timer.cancel();
     }
 }

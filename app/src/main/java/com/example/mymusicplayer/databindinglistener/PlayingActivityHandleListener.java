@@ -55,6 +55,7 @@ public class PlayingActivityHandleListener {
                 break;
             case R.id.play_lastmusic:
                 playerBinder.lastMusic();
+                viewModel.startTiming();
                 Log.d("HandleListener","上一首");
                 break;
             case R.id.play_playorpause:
@@ -71,6 +72,7 @@ public class PlayingActivityHandleListener {
                 break;
             case R.id.play_nextmusic:
                 playerBinder.nextMusic();
+                viewModel.startTiming();
                 Log.d("HandleListener","下一首");
                 break;
             case R.id.play_list:

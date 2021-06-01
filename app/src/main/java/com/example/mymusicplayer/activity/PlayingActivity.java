@@ -74,27 +74,40 @@ public class PlayingActivity extends AppCompatActivity {
             seqLive.observe(PlayingActivity.this, new Observer<Integer>() {
                 @Override
                 public void onChanged(Integer integer) {
-                    //每当播放音乐的seq发生改变，则说明音乐换了，需要更新进度条，歌词等一系列东西。
+                    //每当播放音乐的seq发生改变，则说明音乐换了，需要更新进度条，歌词等一系列ui。
                     Log.d("PlayingActivity","观察到seq更新为" + integer);
+                    playingViewModel.stopTiming();
                     int duration = playerBinder.getDuration();
-                    binding.playProgress.setProgress(0);
+                    //playingViewModel.setCurrentProgress(0);
+                    playingViewModel.setCurrentProgress(playerBinder.getCurrentPosition());
+                    //Log.d("PlayingActivity","currentPosition: " + playerBinder.getCurrentPosition());
+
+                    //主要问题是seq改变有两种情况：1.进入当前活动，此时实际上没有切换歌曲，progress应继承自currentProgress；2.切换歌曲，此时progress应该置零
+                    //playingViewModel.startTiming(playerBinder.getCurrentPosition());
+                    if(playerBinder.isPlaying()) {
+                        playingViewModel.restartTiming();
+                    }
+
                     binding.playProgress.setMax(duration);//进度条的进度单位是毫秒！
                     binding.playCurrentTime.setText(0+"");
                     binding.playEndTime.setText(formatMilliTime(duration));
-                    playingViewModel.startTiming(playerBinder.getCurrentPosition());
-
                     //解析得到单行歌曲的列表
                     lyrics = NetworkUtils.parseStringToLyrics(NetworkUtils.getLyric(playerBinder.getSongList().get(playerBinder.getSeq()).getLyric_id()));
                     initLrc(lyrics);
-
                 }
             });
             MutableLiveData<Boolean> isPause = (MutableLiveData<Boolean>) playerBinder.getIsPause();
             isPause.observe(PlayingActivity.this, new Observer<Boolean>() {
                 @Override
                 public void onChanged(Boolean aBoolean) {
-                    if( aBoolean ) handler.removeMessages(0);
+                    if( aBoolean ) {
+                        //binding.playPlayorpause.setImageResource(R.drawable.pausebutton);
+                        handler.removeMessages(0);
+                        //playingViewModel.stopTiming();
+                    }
                     else{
+                        //binding.playPlayorpause.setImageResource(R.drawable.playbutton);
+                        //playingViewModel.restartTiming();
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
