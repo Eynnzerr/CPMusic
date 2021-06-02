@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.menu);
 
         TextView textView = findViewById(R.id.drawer);
-        textView.setText("作者：陈芃\n版本：v1.0.0\n使用须知:\n一、本应用仅限参考与学习！\n二、目前仍是内测版本，仍存在部分bug，如遇闪退，正常现象。" +
+        textView.setText("作者：陈芃\n版本：v1.2.0\n使用须知:\n一、本应用仅限参考与学习！\n二、目前仍是内测版本，仍存在部分bug，如遇闪退，正常现象。" +
                 "\n三、受到接口限制，本应用只支持下载标清歌曲，不便之处请您谅解。\n四、祝您身体健康，万事如意。");
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);

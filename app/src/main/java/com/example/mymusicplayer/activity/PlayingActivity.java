@@ -86,10 +86,10 @@ public class PlayingActivity extends AppCompatActivity {
                     //Log.d("PlayingActivity","currentPosition: " + playerBinder.getCurrentPosition());
 
                     //主要问题是seq改变有两种情况：1.进入当前活动，此时实际上没有切换歌曲，progress应继承自currentProgress；2.切换歌曲，此时progress应该置零
-                    //playingViewModel.startTiming(playerBinder.getCurrentPosition());
                     if(playerBinder.isPlaying()) {
                         playingViewModel.restartTiming();
                     }
+                    else playingViewModel.startTiming();
 
                     binding.playProgress.setMax(duration);//进度条的进度单位是毫秒！
                     binding.playCurrentTime.setText(0+"");
