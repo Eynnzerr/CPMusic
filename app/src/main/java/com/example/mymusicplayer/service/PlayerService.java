@@ -66,9 +66,7 @@ public class PlayerService extends Service {
 
     private ExecutorService executorService = Executors.newFixedThreadPool(1);
 
-    //TODO 改为livedata
     private MutableLiveData<Boolean> isPause = new MutableLiveData<>();
-    //private Boolean isPause;
 
     private static final MediaPlayer mediaPlayer = new MediaPlayer();//音乐播放器
     static

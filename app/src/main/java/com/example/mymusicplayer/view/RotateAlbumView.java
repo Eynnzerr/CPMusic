@@ -16,7 +16,6 @@ import androidx.annotation.Nullable;
 import com.example.mymusicplayer.R;
 
 public class RotateAlbumView extends FrameLayout {
-    private static final String TAG = "RotateAlbumView";
 
     private ImageView ivAlbumPic;
     private ObjectAnimator animator;
@@ -48,7 +47,6 @@ public class RotateAlbumView extends FrameLayout {
 
     // 更新播放状态
     public void setPlaying(boolean isPlaying) {
-        Log.d(TAG, "update RotateAlbumView: isPlaying = " + isPlaying);
         if (isPlaying) {
             if (!animator.isRunning()) {
                 animator.start();
@@ -66,7 +64,6 @@ public class RotateAlbumView extends FrameLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        Log.d(TAG, "RotateAlbumView: onDetachedFromWindow");
         animator.cancel();
     }
 }

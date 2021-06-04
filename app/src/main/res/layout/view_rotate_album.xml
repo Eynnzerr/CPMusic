@@ -13,7 +13,7 @@
         android:src="@mipmap/example" />
 
     <com.example.mymusicplayer.view.AlbumView
-        android:layout_width="86.49dp"
-        android:layout_height="86.49dp"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
         android:layout_centerInParent="true" />
 </RelativeLayout>
