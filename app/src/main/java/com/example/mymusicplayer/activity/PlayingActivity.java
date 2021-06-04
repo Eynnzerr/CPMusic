@@ -1,10 +1,14 @@
 package com.example.mymusicplayer.activity;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
@@ -23,8 +27,12 @@ import com.example.mymusicplayer.R;
 import com.example.mymusicplayer.databinding.ActivityPlayingBinding;
 import com.example.mymusicplayer.databindinglistener.PlayingActivityHandleListener;
 import com.example.mymusicplayer.entity.TimeLineLyric;
+import com.example.mymusicplayer.fragment.AlbumFragment;
+import com.example.mymusicplayer.fragment.LyricFragment;
 import com.example.mymusicplayer.service.PlayerService;
 import com.example.mymusicplayer.utils.NetworkUtils;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.List;
 
@@ -37,16 +45,9 @@ import java.util.List;
 public class PlayingActivity extends AppCompatActivity {
 
     private PlayingViewModel playingViewModel;
-
     private PlayerService.PlayerBinder playerBinder;
-
     private ActivityPlayingBinding binding;
-
     private MutableLiveData<Integer> seqLive;
-
-    private List<TimeLineLyric> lyrics;
-
-    private Handler handler = new Handler();
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -73,6 +74,7 @@ public class PlayingActivity extends AppCompatActivity {
             }
 
             binding.setPlayingActivityHandleListener(new PlayingActivityHandleListener(PlayingActivity.this,playingViewModel,playerBinder));
+
             seqLive = (MutableLiveData<Integer>) playerBinder.getSeqLive();
             seqLive.observe(PlayingActivity.this, new Observer<Integer>() {
                 @Override
@@ -89,43 +91,14 @@ public class PlayingActivity extends AppCompatActivity {
                     if(playerBinder.isPlaying()) {
                         playingViewModel.restartTiming();
                     }
-                    else playingViewModel.startTiming();
-
+                    else playingViewModel.startTiming();//TODO bug1 这一行是为了自动切换歌曲时进度条从0开始，但导致暂停音乐时退出重进播放活动也会因此开始计时任务
+                    //bug2 haihui导致暂停后如果直接下一首会多一个计时任务
                     binding.playProgress.setMax(duration);//进度条的进度单位是毫秒！
                     binding.playCurrentTime.setText(0+"");
                     binding.playEndTime.setText(formatMilliTime(duration));
-                    //解析得到单行歌曲的列表
-                    lyrics = NetworkUtils.parseStringToLyrics(NetworkUtils.getLyric(playerBinder.getSongList().get(playerBinder.getSeq()).getLyric_id()));
-                    initLrc(lyrics);
-                }
-            });
-            MutableLiveData<Boolean> isPause = (MutableLiveData<Boolean>) playerBinder.getIsPause();
-            isPause.observe(PlayingActivity.this, new Observer<Boolean>() {
-                @Override
-                public void onChanged(Boolean aBoolean) {
-                    if( aBoolean ) {
-                        //binding.playPlayorpause.setImageResource(R.drawable.pausebutton);
-                        handler.removeMessages(0);
-                        //playingViewModel.stopTiming();
-                    }
-                    else{
-                        //binding.playPlayorpause.setImageResource(R.drawable.playbutton);
-                        //playingViewModel.restartTiming();
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                int index = getLyricIndex(lyrics);
-                                binding.lyricView.setIndex(index);
-                                //Log.d("handler","handler线程启动,当前index:" + index + " 歌单为空？" + (lyrics == null));
-                                binding.lyricView.invalidate();//刷新view,自动调用onDraw
-                                handler.postDelayed(this, 100);//递归调用
-                                //TODO 这样无限期地递归调用post，不停创建新的线程，是否太过耗时？可不可以只post一个任务，其中使用while永真循环和sleep实现同样效果？
-                            }
-                        });
-                    }
-                }
-            });
 
+                }
+            });
         }
 
         @Override
@@ -140,7 +113,6 @@ public class PlayingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this,R.layout.activity_playing);
-        binding.lyricView.setMovementMethod(ScrollingMovementMethod.getInstance());
 
         //只绑定播放服务
         Intent bindIntent = new Intent(PlayingActivity.this,PlayerService.class);
@@ -177,79 +149,44 @@ public class PlayingActivity extends AppCompatActivity {
                 currentProgress.setValue(binding.playProgress.getProgress());
             }
         });
-    }
 
-
-    public void initLrc(List<TimeLineLyric> lyrics){
-        binding.lyricView.setmLrcList(lyrics);
-        if( lyrics == null ) return;
-        //切换带动画显示歌词
-        //binding.lyricView.setAnimation(AnimationUtils.loadAnimation(PlayingActivity.this,R.anim.alpha_z));
-        handler.removeMessages(0);//清空原来已有的歌词定位任务
-        handler.post(new Runnable() {
+        binding.viewpager2.setAdapter(new FragmentStateAdapter(PlayingActivity.this) {
+            @NonNull
             @Override
-            public void run() {
-                int index = getLyricIndex(lyrics);
-                binding.lyricView.setIndex(index);
-                //Log.d("handler","handler线程启动,当前index:" + index + " 歌单为空？" + (lyrics == null));
-                binding.lyricView.invalidate();//刷新view,自动调用onDraw
-                handler.postDelayed(this, 100);//递归调用
-                //TODO 这样无限期地递归调用post，不停创建新的线程，是否太过耗时？可不可以只post一个任务，其中使用while永真循环和sleep实现同样效果？
+            public Fragment createFragment(int position) {
+                if( position == 0 ) {
+                    return new LyricFragment();
+                }
+                else return new AlbumFragment();
+            }
+
+            @Override
+            public int getItemCount() {
+                return 2;
             }
         });
-    }
 
-
-
-    //获取当前时间所在歌词下标
-    public int getLyricIndex(List<TimeLineLyric> lyrics) {
-
-        if( lyrics == null )
-        {
-            return -1;
-        }
-
-        int index = -1;
-        int currentTime = 0;
-        int duration = 0;
-
-        if( playerBinder.isPlaying() ) {
-            currentTime = playerBinder.getCurrentPosition();
-            duration = playerBinder.getDuration();
-        }
-        //Log.d("getLyricIndex","currentTime=" + currentTime);
-        //Log.d("getLyricIndex","duration=" + duration);
-
-        if(currentTime < duration) {
-            for (int i = 0; i < lyrics.size(); i++)
-            {
-                if ( i < lyrics.size() - 1 )
-                {
-                    if (currentTime < lyrics.get(i).getStartTime() && i == 0)
-                    {
-                        index = i;
-                    }
-                    if (currentTime > lyrics.get(i).getStartTime() && currentTime < lyrics.get(i + 1).getStartTime())
-                    {
-                        index = i;
-                    }
-                    //break;
-                }
-                if (i == lyrics.size() - 1 && currentTime > lyrics.get(i).getStartTime()) {
-                    index = i;
-                    //没有必要再break了
+        TabLayoutMediator tabLayoutMediator = new TabLayoutMediator(binding.tabLayout, binding.viewpager2, new TabLayoutMediator.TabConfigurationStrategy() {
+            @Override
+            public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
+                switch (position){
+                    case 0:
+                        tab.setText("歌词");
+                        break;
+                    case 1:
+                        tab.setText("专辑");
+                        break;
+                    default:
+                        break;
                 }
             }
-        }
+        });
+        tabLayoutMediator.attach();
 
-        //Log.d("getLyricsIndex",index+"");
-        //返回-1时说明已经播放完或未暂停播放中
-        return index;
     }
 
     //将毫秒转换为"分：秒"格式
-    private String formatMilliTime(int duration)
-    {
+    private String formatMilliTime(int duration) {
         int second = duration / 1000;
         int minute = second / 60;
         second %= 60;
